@@ -21,6 +21,9 @@ class DefectiveCalendarExtension
         $offset = isset($args['offset']) ? $args['offset'] : '0';
         $specialMonthOffset = isset($args['specialmonthoffset']) ? $args['specialmonthoffset'] : 0;
         
+        // disable cache, because otherwise "today" won't be today.
+        $parser->disableCache();
+        
         // set up focus
         $focus = new DateTime( $date );
         // adjust focus by months (special)
@@ -78,18 +81,21 @@ class DefectiveCalendarExtension
         $lastOfMonth = new DateTime();
         $lastOfMonth->setDate($focusYear, $focusMonth, $daysInMonth);
         
+        $today = new DateTime();
+        $todayString = $today->format('Y-m-d');
+        
         
         // the HTML to return
         $output = '';
         
         // begin table
-        $output .= '<table class="dcalendar">';
+        $output .= '<table class="dcalendar-table">';
         
         // month name header row
-        $output .= '<tr><td colspan="7">' . $focusMonthName . " [[$focusYear (year)|$focusYear]]" . '</td></tr>';
+        $output .= '<tr class="dcalendar-header-row"><td colspan="7">' . $focusMonthName . " [[$focusYear (year)|$focusYear]]" . '</td></tr>';
         
         // day of week name row
-        $output .= '<tr><td>S</td><td>M</td><td>T</td><td>W</td><td>T</td><td>F</td><td>S</td></tr>';
+        $output .= '<tr class="dcalendar-dotw-row"><td>S</td><td>M</td><td>T</td><td>W</td><td>T</td><td>F</td><td>S</td></tr>';
         
         // start weeks
         $output .= '<tr>';
@@ -100,14 +106,18 @@ class DefectiveCalendarExtension
         $currentDate = new DateTime($firstOfMonth->format('Y-m-d'));
         $currentDate->sub(new DateInterval('P' . $previousDaysCount . 'D'));
         for ($i = 0; $i < $previousDaysCount; $i++) {
-            $output .= '<td>[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
+            $output .= '<td class="dcalendar-prevmonth-cell">[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
             $currentDate->add($intervalOneDay);
         }
         
         // fill in the focused month
         $currentDate->setDate($firstOfMonth->format('Y'), $firstOfMonth->format('m'), $firstOfMonth->format('d'));
         for ($i = 0; $i < $daysInMonth; $i++) {
-            $output .= '<td>[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
+            $output .= '<td class="dcalendar-focusmonth-cell';
+            if ($currentDate->format('Y-m-d') == $todayString) {
+                $output .= ' dcalendar-today-cell';
+            }
+            $output .= '">[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
             if ($currentDate->format('N') == 6) {
                 $output .= '</tr><tr>';
             }
@@ -119,7 +129,7 @@ class DefectiveCalendarExtension
         $currentDate->add($intervalOneDay);
         $followingDaysCount = 7 - $currentDate->format('N');
         for ($i = 0; $i < $followingDaysCount; $i++) {
-            $output .= '<td>[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
+            $output .= '<td class="dcalendar-nextmonth-cell">[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
             $currentDate->add($intervalOneDay);
         }
 
