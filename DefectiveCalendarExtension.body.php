@@ -19,25 +19,49 @@ class DefectiveCalendarExtension
         $view = isset($args['view']) ? $args['view'] : 'month';
         $date = isset($args['date']) ? $args['date'] : 'now';
         $offset = isset($args['offset']) ? $args['offset'] : '0';
+        $specialMonthOffset = isset($args['specialmonthoffset']) ? $args['specialmonthoffset'] : 0;
         
         // set up focus
         $focus = new DateTime( $date );
+        // adjust focus by months (special)
+        if ($specialMonthOffset != 0) {
+            self::specialMonthAdjust( $focus, $specialMonthOffset );
+        }
         // adjust focus by $offset
         $focus->add(DateInterval::createFromDateString($offset));
         
         
         switch ( $view ) {
             case 'month':
-                $output = DefectiveCalendarExtension::generate_month( $focus );
+                $output = self::generate_month( $focus );
                 break;
 
             default:
-                $output = DefectiveCalendarExtension::generate_month( $focus );
+                $output = self::generate_month( $focus );
                 break;
         }
         
         // parse wikitext, and return
         return $parser->recursiveTagParse( $output, $frame );
+    }
+    
+    /*
+     * if you add or subtract months in PHP, you can get weirdness, e.g.:
+     * 2014-01-31 + 1 month = 2014-03-03
+     * 2014-07-31 - 1 month = 2014-07-01
+     * So this function does the month math from the 15th, and then reassigns or clips the day
+     */
+    static function specialMonthAdjust( $focus, $offset ) {
+        $day = $focus->format('d');
+        // set focus to the middle of the month
+        $focus->setDate( $focus->format('Y'), $focus->format('m'), 15 );
+        $focus->add(DateInterval::createFromDateString($offset . ' months'));
+        // put old day back
+        if ($day > $focus->format('t')) {
+            $focus->setDate( $focus->format('Y'), $focus->format('m'), $focus->format('t') );
+        } else {
+            $focus->setDate( $focus->format('Y'), $focus->format('m'), $day );
+        }
     }
     
     static function generate_month( $focus ) {
