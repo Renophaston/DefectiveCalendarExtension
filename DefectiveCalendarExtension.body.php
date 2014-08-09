@@ -16,10 +16,10 @@ class DefectiveCalendarExtension
     static function render ( $input, array $args, Parser $parser, PPFrame $frame ) {
 
         // set up vars
-        $view = isset($args['view']) ? $args['view'] : 'month';
-        $date = isset($args['date']) ? $args['date'] : 'now';
-        $offset = isset($args['offset']) ? $args['offset'] : '0';
-        $specialMonthOffset = isset($args['specialmonthoffset']) ? $args['specialmonthoffset'] : 0;
+        $view = isset($args['view']) ? $parser->recursiveTagParse( $args['view'], $frame ) : 'month';
+        $date = isset($args['date']) ? $parser->recursiveTagParse( $args['date'], $frame ) : 'now';
+        $offset = isset($args['offset']) ? $parser->recursiveTagParse( $args['offset'], $frame ) : '0';
+        $specialMonthOffset = isset($args['specialmonthoffset']) ? $parser->recursiveTagParse( $args['specialmonthoffset'], $frame ) : 0;
         
         // disable cache, because otherwise "today" won't be today.
         $parser->disableCache();
@@ -98,7 +98,7 @@ class DefectiveCalendarExtension
         $output .= '<tr class="dcalendar-dotw-row"><td>S</td><td>M</td><td>T</td><td>W</td><td>T</td><td>F</td><td>S</td></tr>';
         
         // start weeks
-        $output .= '<tr>';
+        $output .= '<tr class="dcalendar-days-row">';
 
         // fill in previous month's days to pad the calendar
         $previousDaysCount = $firstOfMonth->format('N') % 7;
@@ -119,7 +119,7 @@ class DefectiveCalendarExtension
             }
             $output .= '">[[' . $currentDate->format(self::$linkFormat) . '|' . $currentDate->format(self::$displayFormat) . ']]</td>';
             if ($currentDate->format('N') == 6) {
-                $output .= '</tr><tr>';
+                $output .= '</tr><tr class="dcalendar-days-row">';
             }
             $currentDate->add($intervalOneDay);
         }
